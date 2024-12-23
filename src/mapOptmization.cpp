@@ -72,7 +72,7 @@ public:
     Eigen::MatrixXd poseCovariance;
 
     rclcpp::Subscription<liorf::msg::CloudInfo>::SharedPtr subCloud;
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subGPS;
+    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr subGPS;
     rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subLoop;
 
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubLaserCloudSurround;
@@ -169,7 +169,7 @@ public:
 
         subCloud = create_subscription<liorf::msg::CloudInfo>("liorf/deskew/cloud_info", QosPolicy(history_policy, reliability_policy),
                     std::bind(&mapOptimization::laserCloudInfoHandler, this, std::placeholders::_1));
-        subGPS = create_subscription<sensor_msgs::msg::NavSatFix>(gpsTopic, QosPolicy(history_policy, reliability_policy),
+        subGPS = create_subscription<nav_msgs::msg::Odometry>(gpsTopic, QosPolicy(history_policy, reliability_policy),
                     std::bind(&mapOptimization::gpsHandler, this, std::placeholders::_1));
         subLoop = create_subscription<std_msgs::msg::Float64MultiArray>("lio_loop/loop_closure_detection", QosPolicy(history_policy, reliability_policy),
                     std::bind(&mapOptimization::loopInfoHandler, this, std::placeholders::_1));
@@ -276,33 +276,10 @@ public:
         }
     }
 
-    void gpsHandler(const sensor_msgs::msg::NavSatFix::SharedPtr gpsMsg)
+    void gpsHandler(const nav_msgs::msg::Odometry::SharedPtr gpsMsg)
     {
-        if (gpsMsg->status.status != 0)
-            return;
 
-        Eigen::Vector3d trans_local_;
-        static bool first_gps = false;
-        if (!first_gps) {
-            first_gps = true;
-            gps_trans_.Reset(gpsMsg->latitude, gpsMsg->longitude, gpsMsg->altitude);
-        }
-
-        gps_trans_.Forward(gpsMsg->latitude, gpsMsg->longitude, gpsMsg->altitude, trans_local_[0], trans_local_[1], trans_local_[2]);
-
-        nav_msgs::msg::Odometry gps_odom;
-        gps_odom.header = gpsMsg->header;
-        gps_odom.header.frame_id = "map";
-        gps_odom.pose.pose.position.x = trans_local_[0];
-        gps_odom.pose.pose.position.y = trans_local_[1];
-        gps_odom.pose.pose.position.z = trans_local_[2];
-        tf2::Quaternion quat_tf;
-        quat_tf.setRPY(0.0, 0.0, 0.0);
-        geometry_msgs::msg::Quaternion quat_msg;
-        tf2::convert(quat_tf, quat_msg);
-        gps_odom.pose.pose.orientation = quat_msg;
-        pubGpsOdom->publish(gps_odom);
-        gpsQueue.push_back(gps_odom);
+        gpsQueue.push_back(*gpsMsg);
     }
 
     void pointAssociateToMap(PointType const * const pi, PointType * const po)
