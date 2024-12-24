@@ -57,6 +57,7 @@ Visualization Manager:
           Topic:
             Depth: 5
             Durability Policy: Volatile
+            Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /liorf/mapping/path
@@ -88,6 +89,7 @@ Visualization Manager:
           Topic:
             Depth: 5
             Durability Policy: Volatile
+            Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /liorf/mapping/cloud_registered_raw
@@ -121,6 +123,7 @@ Visualization Manager:
           Topic:
             Depth: 5
             Durability Policy: Volatile
+            Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /liorf/mapping/map_global
@@ -161,6 +164,7 @@ Visualization Manager:
           Topic:
             Depth: 5
             Durability Policy: Volatile
+            Filter size: 10
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /liorf/mapping/odometry
@@ -187,6 +191,9 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /clicked_point
     - Class: rviz_default_plugins/SetInitialPose
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.06853891909122467
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -223,7 +230,7 @@ Visualization Manager:
       Name: Current View
       Near Clip Distance: 0.009999999776482582
       Pitch: 1.0403980016708374
-      Target Frame: <Fixed Frame>
+      Target Frame: lidar_link
       Value: Orbit (rviz_default_plugins)
       Yaw: 2.250396966934204
     Saved: ~
@@ -237,5 +244,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1920
-  X: 2560
+  X: 1920
   Y: 0
