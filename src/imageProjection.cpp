@@ -286,6 +286,10 @@ public:
         timeScanCur = rclcpp::Time(cloudHeader.stamp).seconds();
         timeScanEnd = timeScanCur + laserCloudIn->points.back().time;
 
+        // remove Nan
+        vector<int> indices;
+        pcl::removeNaNFromPointCloud(*laserCloudIn, *laserCloudIn, indices);
+
         // check dense flag
         if (laserCloudIn->is_dense == false)
         {
