@@ -366,8 +366,11 @@ public:
 
       cout << "****************************************************" << endl;
       cout << "Saving map to pcd files ..." << endl;
-      if(req->destination.empty()) saveMapDirectory = std::getenv("HOME") + savePCDDirectory;
-      else saveMapDirectory = std::getenv("HOME") + req->destination;
+      if (req->destination.empty()) {
+          saveMapDirectory = std::getenv("HOME") + savePCDDirectory;
+      } else {
+          saveMapDirectory = req->destination;
+      }
       cout << "Save destination: " << saveMapDirectory << endl;
       // create directory and remove old files;
       int unused = system((std::string("exec rm -r ") + saveMapDirectory).c_str());
