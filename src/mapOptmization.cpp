@@ -23,6 +23,12 @@
 
 #include "Scancontext.h"
 
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+
+#include "ament_index_cpp/get_package_share_directory.hpp"
+
 using namespace gtsam;
 
 using symbol_shorthand::X; // Pose3 (x,y,z,r,p,y)
@@ -376,10 +382,40 @@ public:
       int unused = system((std::string("exec rm -r ") + saveMapDirectory).c_str());
       unused = system((std::string("mkdir -p ") + saveMapDirectory).c_str());
       // save key frame transformations
-      pcl::io::savePCDFileBinary(saveMapDirectory + "/trajectory.pcd", *cloudKeyPoses3D);
-      pcl::io::savePCDFileBinary(saveMapDirectory + "/transformations.pcd", *cloudKeyPoses6D);
-      // extract global point cloud map
+//      pcl::io::savePCDFileBinary(saveMapDirectory + "/trajectory.pcd", *cloudKeyPoses3D);
+//      pcl::io::savePCDFileBinary(saveMapDirectory + "/transformations.pcd", *cloudKeyPoses6D);
 
+      {
+        // create lanelet file
+        std::ofstream trajectory_txt(saveMapDirectory + "trajectory.txt");
+        for (auto point : cloudKeyPoses6D->points)
+        {
+          trajectory_txt << std::fixed << std::setprecision(20) << point.x << " " << point.y << " " << point.z << " " << point.roll << " " << point.pitch << " " << point.yaw << std::endl;
+        }
+        trajectory_txt.close();
+
+        const auto liorf_share_dir = ament_index_cpp::get_package_share_directory("liorf");
+        const auto script_path = liorf_share_dir + "/scripts/lanelet_generator.py";
+
+        std::stringstream command;
+        command << "python3 " << script_path << " " << saveMapDirectory << "trajectory.txt" << " " << saveMapDirectory << "lanelet2_map.osm" << " -m " << mgrsGrid << " -l 2.0 -i 2";
+        std::cout << "Command: " << command.str() << std::endl;
+        int result = std::system(command.str().c_str());
+      }
+
+      {
+        // save map projector info
+        std::ofstream map_projector_info_file(saveMapDirectory + "map_projector_info.yaml");
+        if (map_projector_info_file.is_open())
+        {
+          map_projector_info_file << "projector_type: MGRS" << std::endl;
+          map_projector_info_file << "vertical_datum: WGS84" << std::endl;
+          map_projector_info_file << "mgrs_grid: " << mgrsGrid << std::endl;
+          map_projector_info_file.close();
+        }
+      }
+
+      // extract global point cloud map
       pcl::PointCloud<PointType>::Ptr globalSurfCloud(new pcl::PointCloud<PointType>());
       pcl::PointCloud<PointType>::Ptr globalSurfCloudDS(new pcl::PointCloud<PointType>());
       pcl::PointCloud<PointType>::Ptr globalMapCloud(new pcl::PointCloud<PointType>());
@@ -388,26 +424,10 @@ public:
           cout << "\r" << std::flush << "Processing feature cloud " << i << " of " << cloudKeyPoses6D->size() << " ...";
       }
 
-      if(req->resolution != 0)
-      {
-        cout << "\n\nSave resolution: " << req->resolution << endl;
-        // down-sample and save surf cloud
-        downSizeFilterSurf.setInputCloud(globalSurfCloud);
-        downSizeFilterSurf.setLeafSize(req->resolution, req->resolution, req->resolution);
-        downSizeFilterSurf.filter(*globalSurfCloudDS);
-        pcl::io::savePCDFileBinary(saveMapDirectory + "/SurfMap.pcd", *globalSurfCloudDS);
-      }
-      else
-      {
-
-        // save surf cloud
-        pcl::io::savePCDFileBinary(saveMapDirectory + "/SurfMap.pcd", *globalSurfCloud);
-      }
-
       // save global point cloud map
       *globalMapCloud += *globalSurfCloud;
 
-      int ret = pcl::io::savePCDFileBinary(saveMapDirectory + "/GlobalMap.pcd", *globalMapCloud);
+      int ret = pcl::io::savePCDFileBinary(saveMapDirectory + "/pointcloud_map.pcd", *globalMapCloud);
       res->success = ret == 0;
 
       downSizeFilterSurf.setLeafSize(mappingSurfLeafSize, mappingSurfLeafSize, mappingSurfLeafSize);

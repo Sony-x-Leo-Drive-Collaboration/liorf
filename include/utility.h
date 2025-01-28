@@ -87,6 +87,8 @@ public:
     string odometryFrame;
     string mapFrame;
 
+    string mgrsGrid;
+
     // GPS Settings
     bool useImuHeadingInitialization;
     bool useGpsElevation;
@@ -179,6 +181,9 @@ public:
         get_parameter("odometryFrame", odometryFrame);
         declare_parameter<string>("mapFrame", "map");
         get_parameter("mapFrame", mapFrame);
+
+        declare_parameter<string>("mgrs_grid", "32UNV");
+        get_parameter("mgrs_grid", mgrsGrid);
 
         declare_parameter<bool>("useImuHeadingInitialization", false);
         get_parameter("useImuHeadingInitialization", useImuHeadingInitialization);
